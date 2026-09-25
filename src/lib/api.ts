@@ -74,8 +74,14 @@ export async function api<T = unknown>(
   }
 
   if (res.status === 401) {
-    clearSession();
-    throw new ApiError("Session expired. Please sign in again.", 401);
+    const isLoginRequest = path === "/auth/login";
+    if (!isLoginRequest) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("paint-erp:unauthorized", { detail: { token } }));
+      }
+      clearSession();
+      throw new ApiError("Session expired. Please sign in again.", 401);
+    }
   }
 
   const text = await res.text();
